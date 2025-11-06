@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+  <h2 class="text-center fw-bold text-primary mb-4">
+    {{ board.name }} Board 🧩
+  </h2>
+
+  <!-- Add Collaborator Form -->
+  <div class="text-center mb-4">
+    <form method="POST" action="{{ url_for('add_collaborator', board_id=board.id) }}" class="d-inline-flex">
+      <input type="text" name="username" class="form-control" placeholder="Enter collaborator username..." required>
+      <button type="submit" class="btn btn-info ms-2">👥 Add Collaborator</button>
+    </form>
+  </div>
+
+  <!-- Add List Form -->
+  <div class="text-center mb-4">
+    <form method="POST" action="{{ url_for('add_list', board_id=board.id) }}" class="d-inline-flex">
+      <input type="text" name="list_name" class="form-control" placeholder="Enter new list name..." required>
+      <button type="submit" class="btn btn-primary ms-2">+ Add List</button>
+    </form>
+  </div>
+
+  <!-- Lists Section -->
+  <div class="d-flex flex-wrap justify-content-start gap-4">
+    {% for lst in lists %}
+    <div class="card shadow-sm p-3" style="width: 300px; background-color: #f9f9f9;">
+      <h5 class="fw-bold text-primary d-flex justify-content-between align-items-center">
+        {{ lst.name }}
+        <form method="POST" action="{{ url_for('delete_list', list_id=lst.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-outline-danger">🗑</button>
+        </form>
+      </h5>
+
+      <!-- Add Card Form -->
+      <form method="POST" action="{{ url_for('add_card', list_id=lst.id) }}" class="mt-2">
+        <input type="text" name="title" class="form-control mb-2" placeholder="Card title" required>
+        <textarea name="description" class="form-control mb-2" placeholder="Card description"></textarea>
+        <div class="mb-2">
+          <label class="form-label text-muted small">Due Date:</label>
+          <input type="date" name="due_date" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-sm btn-success w-100">+ Add Card</button>
+      </form>
+
+      <hr>
+
+      <!-- Cards in this list -->
+      {% for card in lst.cards %}
+      <div class="card mb-2 p-3 border-light shadow-sm {% if card.is_overdue %}bg-danger-subtle{% endif %}">
+        <h6 class="fw-bold text-dark mb-1">{{ card.title }}</h6>
+        <p class="text-muted small mb-1">{{ card.description }}</p>
+
+        <!-- Due Date Display and Update -->
+        <form method="POST" action="{{ url_for('update_due_date', card_id=card.id) }}" class="d-flex align-items-center mb-2">
+          <input type="date" name="due_date" value="{{ card.due_date.strftime('%Y-%m-%d') if card.due_date else '' }}" class="form-control form-control-sm me-2">
+          <button type="submit" class="btn btn-sm btn-outline-primary">💾</button>
+        </form>
+
+        {% if card.due_date %}
+        <small class="text-muted">
+          🕒 Due:
+          <span class="{% if card.is_overdue %}text-danger fw-bold{% endif %}">
+            {{ card.due_date.strftime('%Y-%m-%d') }}
+          </span>
+        </small>
+        {% else %}
+        <small class="text-muted">⏰ No due date</small>
+        {% endif %}
+
+        <!-- Status Buttons -->
+        <div class="mt-2 d-flex justify-content-between mb-2">
+          {% if card.status != 'Done' %}
+          <a href="{{ url_for('update_card_status', card_id=card.id, status='Done') }}" class="btn btn-sm btn-outline-success">
+            ✅ Mark Done
+          </a>
+          {% else %}
+          <a href="{{ url_for('update_card_status', card_id=card.id, status='Pending') }}" class="btn btn-sm btn-outline-warning">
+            ↩️ Reopen
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Comments Section -->
+        <div class="mt-2">
+          <h6 class="fw-bold small">💬 Comments</h6>
+          {% for comment in card.comments %}
+          <div class="border p-2 mb-1 rounded" style="background-color:#f1f1f1;">
+            <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+            <br>
+            <small class="text-muted">{{ comment.date_created.strftime('%Y-%m-%d %H:%M') }}</small>
+          </div>
+          {% endfor %}
+
+          <!-- Add Comment Form -->
+          <form method="POST" action="{{ url_for('add_comment', card_id=card.id) }}" class="d-flex mt-1">
+            <input type="text" name="comment" class="form-control form-control-sm me-1" placeholder="Add a comment..." required>
+            <button type="submit" class="btn btn-sm btn-outline-primary">💬</button>
+          </form>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-5 text-center">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">⬅ Back to Dashboard</a>
+  </div>
+</div>
+
+<!-- Style for overdue cards -->
+<style>
+  .bg-danger-subtle {
+    background-color: #ffe6e6 !important;
+  }
+</style>
+
+{% endblock %}

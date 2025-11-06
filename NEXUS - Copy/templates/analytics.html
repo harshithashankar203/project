@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+  <h2 class="text-center text-primary fw-bold mb-4">
+    📊 Board Analytics Overview
+  </h2>
+
+  <!-- Summary Section -->
+  <div class="row g-4 text-center mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm border-0 glass-card p-3 rounded-4">
+        <h6 class="text-muted">Boards</h6>
+        <h3 class="text-primary fw-bold">{{ total_boards or 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm border-0 glass-card p-3 rounded-4">
+        <h6 class="text-muted">Lists</h6>
+        <h3 class="text-success fw-bold">{{ total_lists or 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm border-0 glass-card p-3 rounded-4">
+        <h6 class="text-muted">Cards</h6>
+        <h3 class="text-info fw-bold">{{ total_cards or 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm border-0 glass-card p-3 rounded-4">
+        <h6 class="text-muted">Completed</h6>
+        <h3 class="text-success fw-bold">{{ completed_cards or 0 }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="row mt-5">
+    <!-- Task Status Pie Chart -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm border-0 p-3 rounded-4">
+        <h5 class="text-center text-primary mb-3 fw-bold">Task Completion Status</h5>
+        <canvas id="statusChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Cards per Board Stacked Bar Chart -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm border-0 p-3 rounded-4">
+        <h5 class="text-center text-primary mb-3 fw-bold">Cards per Board</h5>
+        <canvas id="boardChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="text-center mt-5">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary px-4 py-2">
+      ⬅ Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Pie Chart: Task Status
+  const statusCtx = document.getElementById('statusChart');
+  new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Completed', 'Pending', 'Overdue'],
+      datasets: [{
+        data: [
+          {{ completed_cards or 0 }},
+          {{ pending_cards or 0 }},
+          {{ overdue_cards or 0 }}
+        ],
+        backgroundColor: ['#4caf50', '#ff9800', '#f44336'],
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return `${ctx.label}: ${ctx.parsed} cards`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Stacked Bar Chart: Cards per Board
+  const boardCtx = document.getElementById('boardChart');
+  new Chart(boardCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ board_names | tojson }},
+      datasets: [
+        {
+          label: 'Completed',
+          data: {{ completed_cards_per_board | tojson }},
+          backgroundColor: '#4caf50',
+          stack: 'Stack 0'
+        },
+        {
+          label: 'Pending',
+          data: {{ pending_cards_per_board | tojson }},
+          backgroundColor: '#ff9800',
+          stack: 'Stack 0'
+        },
+        {
+          label: 'Overdue',
+          data: {{ overdue_cards_per_board | tojson }},
+          backgroundColor: '#f44336',
+          stack: 'Stack 0'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'Number of Cards' } },
+        x: { title: { display: true, text: 'Boards' } }
+      }
+    }
+  });
+</script>
+
+<style>
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+</style>
+
+{% endblock %}

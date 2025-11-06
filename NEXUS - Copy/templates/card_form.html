@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+  <div class="card shadow-lg p-4">
+    <h3 class="fw-bold text-center text-primary">
+      {% if card %} Edit Card {% else %} Add New Card {% endif %}
+    </h3>
+    <hr>
+
+    <form method="POST"
+          action="{% if card %}{{ url_for('update_card', card_id=card.id) }}{% else %}{{ url_for('add_card', list_id=list.id) }}{% endif %}">
+      
+      <!-- Card Title -->
+      <div class="mb-3">
+        <label class="form-label">Card Title</label>
+        <input type="text" name="card_title" class="form-control"
+               value="{% if card %}{{ card.title }}{% endif %}" required>
+      </div>
+
+      <!-- Card Description -->
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea name="card_description" class="form-control" rows="4"
+                  placeholder="Enter details">{% if card %}{{ card.description }}{% endif %}</textarea>
+      </div>
+
+      <!-- Card Status -->
+      <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+          <option value="Pending" {% if card and card.status == "Pending" %}selected{% endif %}>Pending</option>
+          <option value="Done" {% if card and card.status == "Done" %}selected{% endif %}>Done</option>
+        </select>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('view_board', board_id=list.board_id if list else card.list.board_id) }}" class="btn btn-secondary">
+          ← Back
+        </a>
+        <button type="submit" class="btn btn-success">
+          {% if card %} Update Card {% else %} Add Card {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
